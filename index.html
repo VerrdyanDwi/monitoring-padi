@@ -3,90 +3,137 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Monitoring Padi Mobile</title>
+    <title>Dashboard Padi Pro - D3.js</title>
     
     <script src="https://d3js.org/d3.v7.min.js"></script>
     
     <style>
-        /* CSS Dasar agar tampilan cantik di HP */
+        /* Definisi Variabel Warna (Mode Terang & Gelap) */
+        :root {
+            --bg-body: #f0f2f5;
+            --bg-card: #ffffff;
+            --text-main: #2c3e50;
+            --text-sub: #7f8c8d;
+            --shadow: rgba(0,0,0,0.1);
+        }
+
+        [data-theme="dark"] {
+            --bg-body: #121212;
+            --bg-card: #1e1e1e;
+            --text-main: #ffffff;
+            --text-sub: #bdc3c7;
+            --shadow: rgba(0,0,0,0.5);
+        }
+
         body { 
-            font-family: 'Arial', sans-serif; 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
             margin: 0; 
-            padding: 15px; 
-            background-color: #f4f7f6; 
+            padding: 20px; 
+            background-color: var(--bg-body); 
+            color: var(--text-main);
+            transition: all 0.4s ease;
             display: flex;
-            flex-direction: column;
-            align-items: center;
+            justify-content: center;
         }
 
         .container { 
             width: 100%; 
-            max-width: 500px; /* Ukuran maksimal di desktop, tetap penuh di HP */
-            background: white; 
-            padding: 20px; 
-            border-radius: 20px; 
-            box-shadow: 0 4px 10px rgba(0,0,0,0.1); 
-            box-sizing: border-box;
-            margin-top: 20px;
-        }
-
-        h1 { font-size: 22px; color: #333; margin-bottom: 5px; }
-        p { font-size: 14px; color: #777; margin-bottom: 20px; }
-
-        /* Kotak Status Utama */
-        #status-box {
-            width: 100%;
-            padding: 50px 10px;
-            border-radius: 15px;
-            font-size: 28px;
-            font-weight: bold;
-            color: white;
-            text-shadow: 1px 1px 2px rgba(0,0,0,0.2);
-            transition: 0.5s;
-            box-sizing: border-box;
-            display: flex;
-            justify-content: center;
-            align-items: center;
+            max-width: 480px; 
+            background: var(--bg-card); 
+            padding: 30px; 
+            border-radius: 30px; 
+            box-shadow: 0 15px 35px var(--shadow); 
             text-align: center;
-            min-height: 150px;
+            position: relative;
         }
 
-        /* Warna-warna Status */
-        .fase-0 { background-color: #bdc3c7; } /* Kosong */
-        .fase-1 { background-color: #27ae60; } /* Vegetatif */
-        .fase-2 { background-color: #2ecc71; } /* Reproduktif */
-        .fase-3 { background-color: #f1c40f; color: #333 !important; } /* Pematangan */
-        .anomali { background-color: #e74c3c; } /* Error */
+        /* Tombol Toggle Mode */
+        #theme-btn {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 50px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: bold;
+            transition: 0.3s;
+            background: #34495e;
+            color: white;
+        }
 
-        #update-time { font-size: 12px; margin-top: 15px; color: #999; }
+        h1 { font-size: 26px; margin-bottom: 5px; letter-spacing: -1px; }
+        .subtitle { font-size: 14px; color: var(--text-sub); margin-bottom: 25px; }
+
+        /* Kartu Status Utama */
+        #status-card {
+            width: 100%;
+            min-height: 200px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            border-radius: 25px;
+            font-size: 28px;
+            font-weight: 800;
+            color: white;
+            transition: 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+            padding: 20px;
+            box-sizing: border-box;
+            box-shadow: inset 0 0 30px rgba(0,0,0,0.1);
+            margin-bottom: 15px;
+        }
+
+        /* Klasifikasi Warna Fase */
+        .bg-loading { background-color: #95a5a6; }
+        .bg-fase-0  { background-color: #7f8c8d; } /* Kosong */
+        .bg-fase-1  { background-color: #27ae60; } /* Vegetatif */
+        .bg-fase-2  { background-color: #2ecc71; } /* Reproduktif */
+        .bg-fase-3  { background-color: #f1c40f; color: #2c3e50 !important; } /* Pematangan */
+        .bg-anomali { background-color: #e74c3c; animation: pulse 1.5s infinite; }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.02); }
+            100% { transform: scale(1); }
+        }
+
+        #time-log { font-size: 12px; color: var(--text-sub); }
         
-        #log {
-            margin-top: 15px;
+        #debug-console {
+            margin-top: 25px;
             font-size: 10px;
-            color: #aaa;
-            background: #f9f9f9;
-            padding: 10px;
-            border-radius: 8px;
-            word-break: break-all;
+            color: var(--text-sub);
+            background: rgba(0,0,0,0.03);
+            padding: 12px;
+            border-radius: 12px;
             text-align: left;
+            border: 1px dashed var(--text-sub);
         }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <h1>Monitoring Padi</h1>
-    <p>Status Pertumbuhan Real-Time</p>
-
-    <div id="status-box" class="fase-0">MENUNGGU DATA...</div>
-
-    <div id="update-time">Waktu check: -</div>
+    <button id="theme-btn">🌙 Gelap</button>
     
-    <div id="log">Sistem Siap.</div>
+    <h1>Monitoring Padi</h1>
+    <div class="subtitle">Real-Time Growth Tracking</div>
+
+    <div id="status-card" class="bg-loading">
+        <span id="txt-status">MENGHUBUNGKAN...</span>
+    </div>
+
+    <div id="time-log">Sync: -</div>
+    
+    <div id="debug-console">System: Menunggu InfluxDB...</div>
 </div>
 
 <script>
-    // --- KONFIGURASI INFLUXDB ---
+    // ==========================================
+    // 1. KONFIGURASI (GANTI DENGAN DATA ASLIMU)
+    // ==========================================
     const CONFIG = {
         url: "https://us-east-1-1.aws.cloud2.influxdata.com", 
         token: "ieRDXoPlxImCroRqKYzySuX1xBYVIW0HQa2bOjoPwYldMyNWaJ_bA1U6s9kL2nLpbbDs_1dXWO4sCQI2CuIEMA==",
@@ -94,8 +141,28 @@
         bucket: "monitoring_padi"
     };
 
-    async function ambilData() {
-        const fluxQuery = `
+    // ==========================================
+    // 2. LOGIKA GANTI TEMA (D3.js Implementation)
+    // ==========================================
+    let isDarkMode = false;
+    const btn = d3.select("#theme-btn");
+
+    btn.on("click", function() {
+        isDarkMode = !isDarkMode;
+        if(isDarkMode) {
+            d3.select("body").attr("data-theme", "dark");
+            btn.text("☀️ Terang").style("background", "#f1c40f").style("color", "#2c3e50");
+        } else {
+            d3.select("body").attr("data-theme", null);
+            btn.text("🌙 Gelap").style("background", "#34495e").style("color", "white");
+        }
+    });
+
+    // ==========================================
+    // 3. FUNGSI AMBIL DATA INFLUXDB
+    // ==========================================
+    async function fetchData() {
+        const query = `
             from(bucket: "${CONFIG.bucket}")
             |> range(start: -1h)
             |> filter(fn: (r) => r._measurement == "pertumbuhan_padi")
@@ -111,58 +178,72 @@
                     'Content-Type': 'application/vnd.flux',
                     'Accept': 'application/csv'
                 },
-                body: fluxQuery
+                body: query
             });
 
-            const data = await response.text();
-            document.getElementById('log').innerText = "Raw CSV: " + data.substring(0, 50);
-            interpretasiData(data);
-        } catch (error) {
-            document.getElementById('log').innerText = "Error: " + error;
+            if (!response.ok) throw new Error("Akses Ditolak/Token Salah");
+
+            const csv = await response.text();
+            parseAndUpdate(csv);
+        } catch (err) {
+            d3.select("#debug-console").text("Log: " + err.message);
+            d3.select("#status-card").attr("class", "bg-anomali");
+            d3.select("#txt-status").text("KONEKSI ERROR");
         }
     }
 
-    function interpretasiData(csv) {
-        const lines = csv.trim().split('\n');
-        if (lines.length < 2) return;
+    // ==========================================
+    // 4. PEMBACAAN CSV & UPDATE UI (D3.js)
+    // ==========================================
+    function parseAndUpdate(csv) {
+        const rows = csv.trim().split('\n');
+        d3.select("#debug-console").text("Raw Data: " + rows[rows.length-1].substring(0, 50));
 
-        const kolom = lines[lines.length - 1].split(',');
+        if (rows.length < 2) {
+            updateUI(0); // Set ke Kosong jika tidak ada data
+            return;
+        }
+
+        const cols = rows[rows.length - 1].split(',');
+        let kode = null;
         
-        // Cari angka di kolom-kolom terakhir
-        let nilai = null;
-        for (let i = kolom.length - 1; i >= 0; i--) {
-            let item = kolom[i].trim();
-            if (["-1", "0", "1", "2", "3"].includes(item)) {
-                nilai = parseInt(item);
+        // Cari angka fase di kolom CSV
+        for (let i = cols.length - 1; i >= 0; i--) {
+            let val = cols[i].trim();
+            if (["-1", "0", "1", "2", "3"].includes(val)) {
+                kode = parseInt(val);
                 break;
             }
         }
-
-        updateTampilan(nilai);
+        updateUI(kode);
     }
 
-    function updateTampilan(kode) {
-        const box = d3.select("#status-box");
-        const timeDiv = document.getElementById('update-time');
-        
-        timeDiv.innerText = "Update: " + new Date().toLocaleTimeString();
+    function updateUI(kode) {
+        const card = d3.select("#status-card");
+        const txt = d3.select("#txt-status");
+        d3.select("#time-log").text("Sync: " + new Date().toLocaleTimeString());
 
         if (kode === 1) {
-            box.text("FASE 1: VEGETATIF").attr("class", "fase-1");
+            card.attr("class", "bg-fase-1");
+            txt.text("FASE 1: VEGETATIF");
         } else if (kode === 2) {
-            box.text("FASE 2: REPRODUKTIF").attr("class", "fase-2");
+            card.attr("class", "bg-fase-2");
+            txt.text("FASE 2: REPRODUKTIF");
         } else if (kode === 3) {
-            box.text("FASE 3: PEMATANGAN").attr("class", "fase-3");
+            card.attr("class", "bg-fase-3");
+            txt.text("FASE 3: PEMATANGAN");
         } else if (kode === -1) {
-            box.text("⚠️ ANOMALI").attr("class", "anomali");
+            card.attr("class", "bg-anomali");
+            txt.html("⚠️ ANOMALI<br><small style='font-size:12px'>Cek Posisi Sensor</small>");
         } else {
-            box.text("KOSONG").attr("class", "fase-0");
+            card.attr("class", "bg-fase-0");
+            txt.text("KOSONG / BIBIT");
         }
     }
 
-    // Interval cek data setiap 2 detik
-    setInterval(ambilData, 2000);
-    ambilData();
+    // Jalankan pooling setiap 2 detik
+    setInterval(fetchData, 2000);
+    fetchData();
 
 </script>
 </body>
